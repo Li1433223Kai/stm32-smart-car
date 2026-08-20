@@ -1,0 +1,52 @@
+# Keil MDK 编译产物（任意目录下的同名文件）
+*.o
+*.d
+*.crf
+*.axf
+*.hex
+*.map
+*.htm
+*.lnp
+*.sct
+*.dep
+*.lst
+*.iex
+*.build_log.htm
+build_log.txt
+
+# Keil 编译输出目录（任意目录下的同名目录）
+Objects/
+Listings/
+**/MDK-ARM/f103/
+
+# Keil 用户界面配置（含个人路径和窗口布局）
+*.uvguix.*
+
+# 调试配置（Keil自动生成）
+DebugConfig/
+*.dbgconf
+*.dbgconf.base@*
+
+# RTE 自动生成头文件
+**/MDK-ARM/RTE/
+**/2-1stm32工程模板/RTE/
+
+# VS Code / Keil Assistant 生成文件
+.vscode/
+*.log
+*.log.lock
+uv4.log
+uv4.log.lock
+
+# 工具状态文件
+.embeddedskills/
+
+# 操作系统垃圾文件
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# 备份文件
+*.bak
+*.tmp
+*~
