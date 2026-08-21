@@ -480,6 +480,11 @@
               <FileType>1</FileType>
               <FilePath>../BSP/bsp_motor.c</FilePath>
             </File>
+            <File>
+              <FileName>bsp_gray.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../BSP/bsp_gray.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

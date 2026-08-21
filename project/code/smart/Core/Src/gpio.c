@@ -70,6 +70,22 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+  /*Configure GPIO pin Output Level for gray sensor AD pins */
+  HAL_GPIO_WritePin(GPIOA, GRAY_AD0_Pin|GRAY_AD1_Pin|GRAY_AD2_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : GRAY_AD0_Pin GRAY_AD1_Pin GRAY_AD2_Pin */
+  GPIO_InitStruct.Pin = GRAY_AD0_Pin|GRAY_AD1_Pin|GRAY_AD2_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : GRAY_OUT_Pin */
+  GPIO_InitStruct.Pin = GRAY_OUT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
 }
 
 /* USER CODE BEGIN 2 */
