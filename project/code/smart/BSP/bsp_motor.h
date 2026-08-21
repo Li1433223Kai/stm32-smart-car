@@ -1,7 +1,7 @@
 #ifndef __BSP_MOTOR_H
 #define __BSP_MOTOR_H
 
-#include "main.h"   /* 包含CubeMX生成的引脚宏定义(BIN1_Pin/htim3等) */
+#include "main.h"   /* 包含CubeMX生成的引脚宏定义(AIN1_Pin/BIN1_Pin/htim3等) */
 
 /*
  * PWM占空比最大值, 对应ARR=7199
@@ -10,7 +10,7 @@
  */
 #define MOTOR_PWM_MAX        7200
 
-/* 电机编号枚举: 对应D153C的A/B两个通道
+/* 电机编号枚举: 对应D153C双路驱动板的A/B两个通道
  * A通道(左轮): PWMA=PB1(TIM3_CH4), AIN1=PB10, AIN2=PB11
  * B通道(右轮): PWMB=PB0(TIM3_CH3), BIN1=PB12, BIN2=PB13
  */
