@@ -104,8 +104,8 @@ int main(void)
     /* USER CODE BEGIN 3 */
     HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
     printf("Forward\r\n");
-    Motor_SetSpeed(MOTOR_A, 3000);
-    Motor_SetSpeed(MOTOR_B, 3000);
+    Motor_SetSpeed(MOTOR_A, 1500);
+    Motor_SetSpeed(MOTOR_B, 1500);
     HAL_Delay(2000);
 
     Motor_StopAll();
@@ -113,8 +113,8 @@ int main(void)
     HAL_Delay(1000);
 
     printf("Backward\r\n");
-    Motor_SetSpeed(MOTOR_A, -3000);
-    Motor_SetSpeed(MOTOR_B, -3000);
+    Motor_SetSpeed(MOTOR_A, -1500);
+    Motor_SetSpeed(MOTOR_B, -1500);
     HAL_Delay(2000);
 
     Motor_StopAll();
