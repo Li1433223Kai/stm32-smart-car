@@ -26,6 +26,7 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include "bsp_motor.h"
+#include "bsp_gray.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -93,6 +94,9 @@ int main(void)
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
   Motor_Init();
+  Motor_StopAll();     /* 测试灰度时电机停止, 避免车乱跑 */
+  Gray_Init();
+  printf("Gray sensor test start\r\n");
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -102,24 +106,25 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    uint8_t gray[8];
+    int16_t pos;
+    uint8_t i;
+
+    Gray_ReadAll(gray);
+    pos = Gray_GetPosition();
+
+    /* 通过串口打印8路灰度值: 1=白, 0=黑
+     * 格式: [0 1 1 0 0 1 1 0] pos=-1000 */
+    printf("[");
+    for (i = 0; i < 8; i++)
+        {
+            printf("%d", gray[i]);
+            if (i < 7) printf(" ");
+        }
+    printf("] pos=%d\r\n", pos);
+
     HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-    printf("Forward\r\n");
-    Motor_SetSpeed(MOTOR_A, 1500);
-    Motor_SetSpeed(MOTOR_B, 1500);
-    HAL_Delay(2000);
-
-    Motor_StopAll();
-    printf("Stop\r\n");
-    HAL_Delay(1000);
-
-    printf("Backward\r\n");
-    Motor_SetSpeed(MOTOR_A, -1500);
-    Motor_SetSpeed(MOTOR_B, -1500);
-    HAL_Delay(2000);
-
-    Motor_StopAll();
-    printf("Stop\r\n");
-    HAL_Delay(1000);
+    HAL_Delay(100);
   }
   /* USER CODE END 3 */
 }
