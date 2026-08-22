@@ -113,8 +113,8 @@ int main(void)
     Gray_ReadAll(gray);
     pos = Gray_GetPosition();
 
-    /* 通过串口打印8路灰度值: 1=白, 0=黑
-     * 格式: [0 1 1 0 0 1 1 0] pos=-1000 */
+    /* 通过串口打印8路灰度值: 1=黑(灯亮), 0=白(灯灭)
+     * 格式: [0 0 0 1 1 0 0 0] pos=0  黑线在中间 */
     printf("[");
     for (i = 0; i < 8; i++)
         {
