@@ -69,7 +69,7 @@ void Error_Handler(void);
 #define BIN2_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
-/* 八路灰度传感器引脚定义 (手动添加, CubeMX重新生成时需要在.ioc中保留这些引脚配置) */
+/* 八路灰度传感器引脚定义  */
 #define GRAY_AD0_Pin GPIO_PIN_2
 #define GRAY_AD0_GPIO_Port GPIOA
 #define GRAY_AD1_Pin GPIO_PIN_3
