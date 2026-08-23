@@ -21,6 +21,7 @@ Listings/
 
 # Keil 用户界面配置（含个人路径和窗口布局）
 *.uvguix.*
+*.uvoptx
 
 # 调试配置（Keil自动生成）
 DebugConfig/
