@@ -40,6 +40,8 @@ uv4.log.lock
 
 # 工具状态文件
 .embeddedskills/
+.reasonix/
+reasonix.toml
 
 # 操作系统垃圾文件
 Thumbs.db
