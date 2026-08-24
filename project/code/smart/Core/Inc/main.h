@@ -59,6 +59,14 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define LED_Pin GPIO_PIN_13
 #define LED_GPIO_Port GPIOC
+#define Gray_AD0_Pin GPIO_PIN_2
+#define Gray_AD0_GPIO_Port GPIOA
+#define Gray_AD1_Pin GPIO_PIN_3
+#define Gray_AD1_GPIO_Port GPIOA
+#define Gray_AD2_Pin GPIO_PIN_4
+#define Gray_AD2_GPIO_Port GPIOA
+#define Gray_out_Pin GPIO_PIN_5
+#define Gray_out_GPIO_Port GPIOA
 #define AIN1_Pin GPIO_PIN_10
 #define AIN1_GPIO_Port GPIOB
 #define AIN2_Pin GPIO_PIN_11
@@ -70,14 +78,6 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN Private defines */
 /* 八路灰度传感器引脚定义  */
-#define GRAY_AD0_Pin GPIO_PIN_2
-#define GRAY_AD0_GPIO_Port GPIOA
-#define GRAY_AD1_Pin GPIO_PIN_3
-#define GRAY_AD1_GPIO_Port GPIOA
-#define GRAY_AD2_Pin GPIO_PIN_4
-#define GRAY_AD2_GPIO_Port GPIOA
-#define GRAY_OUT_Pin GPIO_PIN_5
-#define GRAY_OUT_GPIO_Port GPIOA
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
