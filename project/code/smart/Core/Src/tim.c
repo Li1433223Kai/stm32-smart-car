@@ -112,8 +112,8 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
 
     __HAL_RCC_GPIOB_CLK_ENABLE();
     /**TIM3 GPIO Configuration
-    PB0     ------> TIM3_CH3  (PWMB - 右电机)
-    PB1     ------> TIM3_CH4  (PWMA - 左电机)
+    PB0     ------> TIM3_CH3
+    PB1     ------> TIM3_CH4
     */
     GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -146,3 +146,4 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
 /* USER CODE BEGIN 1 */
 
 /* USER CODE END 1 */
+
