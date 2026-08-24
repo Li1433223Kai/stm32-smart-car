@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include "bsp_motor.h"
 #include "bsp_gray.h"
+#include "app.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -69,7 +70,9 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+   uint32_t last_tick = 0;
+   uint32_t last_print_tick = 0;
+   const uint32_t PERIOD = 20;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -94,9 +97,10 @@ int main(void)
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
   Motor_Init();
-  Motor_StopAll();     /* 测试灰度时电机停止, 避免车乱跑 */
+  Motor_StopAll();     /* 开始循迹前电机先停 */
   Gray_Init();
-  printf("Gray sensor test start\r\n");
+  App_Init();
+  printf("follow test start\r\n");
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -106,27 +110,18 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    uint8_t gray[8];
-    int16_t pos;
-    uint8_t i;
-
-    Gray_ReadAll(gray);
-    pos = Gray_GetPosition();
-
-    /* 通过串口打印8路灰度值: 1=黑(灯亮), 0=白(灯灭)
-     * 格式: [0 0 0 1 1 0 0 0] pos=0  黑线在中间 */
-    printf("[");
-    for (i = 0; i < 8; i++)
-        {
-            printf("%d", gray[i]);
-            if (i < 7) printf(" ");
-        }
-    printf("] pos=%d\r\n", pos);
-
-    HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-    HAL_Delay(100);
-  }
+    if(HAL_GetTick() - last_tick >= PERIOD)
+		{
+			last_tick = HAL_GetTick();
+			App_Follow();
+		}
+	if(HAL_GetTick() - last_print_tick >= 200)
+		{
+		    last_print_tick = HAL_GetTick();
+			printf("pos:%d\r\n",Gray_GetPosition());
+		}
   /* USER CODE END 3 */
+  }
 }
 
 /**

@@ -43,11 +43,11 @@ static void Gray_Delay_us(uint32_t us)
  */
 static void Gray_SetChannel(uint8_t ch)
 {
-    HAL_GPIO_WritePin(GRAY_AD0_GPIO_Port, GRAY_AD0_Pin,
+    HAL_GPIO_WritePin(Gray_AD0_GPIO_Port, Gray_AD0_Pin,
         (ch & 0x01) ? GPIO_PIN_SET : GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(GRAY_AD1_GPIO_Port, GRAY_AD1_Pin,
+    HAL_GPIO_WritePin(Gray_AD1_GPIO_Port, Gray_AD1_Pin,
         (ch & 0x02) ? GPIO_PIN_SET : GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(GRAY_AD2_GPIO_Port, GRAY_AD2_Pin,
+    HAL_GPIO_WritePin(Gray_AD2_GPIO_Port, Gray_AD2_Pin,
         (ch & 0x04) ? GPIO_PIN_SET : GPIO_PIN_RESET);
 }
 
@@ -83,7 +83,7 @@ uint8_t Gray_ReadChannel(uint8_t ch)
     /* 读取OUT引脚:
      * 高电平(SET) = 灯亮 = 检测到黑线 = GRAY_BLACK
      * 低电平(RESET) = 灯灭 = 白色地面 = GRAY_WHITE */
-    if (HAL_GPIO_ReadPin(GRAY_OUT_GPIO_Port, GRAY_OUT_Pin) == GPIO_PIN_SET)
+    if (HAL_GPIO_ReadPin(Gray_out_GPIO_Port, Gray_out_Pin) == GPIO_PIN_SET)
         {
             return GRAY_BLACK;
         }
