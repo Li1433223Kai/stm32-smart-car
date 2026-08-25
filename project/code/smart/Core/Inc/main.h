@@ -77,7 +77,7 @@ void Error_Handler(void);
 #define BIN2_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
-/* 八路灰度传感器引脚定义  */
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

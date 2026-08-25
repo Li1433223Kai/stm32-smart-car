@@ -8,31 +8,54 @@
  * 目的是先验证两电机都能正常正转、base 速度选得合适(高于死区)。
  * Kp/差速逻辑下一阶段再加。
  */
-#define BASE_SPEED      2000    /* 基础速度: 先给2000(高于左轮死区约600), 后面调 */
-
+#define BASE_SPEED      1500   /* 基础速度 */
+#define KP              1
+#define MIN_SPEED       600
+#define MAX_SPEED       7200
 /*
  * 循迹模块初始化
- * 目前无额外配置, 保留接口方便后续扩展。
- */
+*/
 void App_Init(void)
 {
     /* 暂无需要初始化的内容 */
 }
 
-/*
- * 单次循迹控制 (由主循环按固定节拍调用)
- *
- * 本阶段: 直接给两轮固定基础速度, 观察是否直行、速度是否合适。
- * pos = Gray_GetPosition() 先读出来(便于调试打印), 但暂不参与差速。
- */
+//执行循迹
 void App_Follow(void)
 {
     int16_t pos;
-
+    int32_t steer;
+	int16_t right ,left;
     pos = Gray_GetPosition();
-    (void)pos;    /* 本阶段暂不使用位置值, 防止未使用告警 */
+    steer = (int32_t)KP * pos ;
+	
+	if(pos == GRAY_ALL_BLACK )  //全黑
+		{
+		   Motor_SetSpeed(MOTOR_A, BASE_SPEED);    
+		   Motor_SetSpeed(MOTOR_B, BASE_SPEED);   
+			return;
+		}
+		
+	else if(pos == GRAY_ALL_WHITE)  //全白
+		{
+		   Motor_SetSpeed(MOTOR_A, 0);    
+		   Motor_SetSpeed(MOTOR_B, 0);
+			return;
+		}
+		
+	else
+		{
+			left = BASE_SPEED + steer;
+			right = BASE_SPEED - steer;
+		
+//		pwm限幅
+		if (left  < MIN_SPEED)  left  = MIN_SPEED;
+		if (left  > MAX_SPEED)  left  = MAX_SPEED;
+		if (right < MIN_SPEED)  right = MIN_SPEED;
+		if (right > MAX_SPEED)  right = MAX_SPEED;
+		}
 
-    /* 差速逻辑(下一阶段): steer = Kp * pos, 左右 = base +/- steer, 再做下限钳位 */
-    Motor_SetSpeed(MOTOR_A, BASE_SPEED);    /* A = 左轮 */
-    Motor_SetSpeed(MOTOR_B, BASE_SPEED);    /* B = 右轮 */
+ 
+    Motor_SetSpeed(MOTOR_A, left);    /* A = 左轮 */
+    Motor_SetSpeed(MOTOR_B, right);    /* B = 右轮 */
 }
