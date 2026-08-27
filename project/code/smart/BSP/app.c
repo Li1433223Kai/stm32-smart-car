@@ -2,27 +2,25 @@
 #include "bsp_motor.h"
 #include "bsp_gray.h"
 #include "bsp_encoder.h"
-/*
- * 循迹控制参数定义
- * 本阶段先"纯直行": 不读位置做差速, 只用固定 base 速度让两轮同速,
- * 目的是先验证两电机都能正常正转、base 速度选得合适(高于死区)。
- * Kp/差速逻辑下一阶段再加。
- */
- //app_follow位置环参数
-#define BASE_SPEED      1500   /* 基础速度 */
-#define KP              1
-#define MIN_SPEED       600
-#define MAX_SPEED       7200
+#include <stdio.h>
+//App__Position_Control位置环参数
 
+#define KP              1
+#define TARGET_MIN      100
+#define TARGET_MAX      200
+#define BASE_SPEED      150
+#define MAX_STEER       50
 /* ==== 速度环PID参数 ==== */
-#define TARGET_SPEED    150     /* 目标车轮RPM */
-#define PID_KP          50     /* 比例, 先小逐步调大 */
-#define PID_KI          1      /* 先用0, P调稳后再加 */
+
+#define PID_KP          15     /* 比例, 先小逐步调大 */
+#define PID_KI          1     /* 先用0, P调稳后再加 */
 #define INTEGRAL_MAX    2000    /* 积分限幅 */
 #define PWM_LIMIT       7200    /* PWM限幅 */
 
 static int32_t s_left_integral  = 0;
 static int32_t s_right_integral = 0;
+static int16_t target_left = 150 ;
+static int16_t target_right = 150;
 /*
  * 循迹模块初始化
 */
@@ -31,50 +29,55 @@ void App_Init(void)
     /* 暂无需要初始化的内容 */
 }
 
-//执行位置环循迹
-void App_Follow(void)
+//执行位置环pid
+void App_Position_Control(void)
 {
     int16_t pos;
-    int32_t steer;
-	int16_t right ,left;
-    pos = Gray_GetPosition();
-    steer = (int32_t)KP * pos ;
+    pos = Gray_GetPosition();   //误差
+    float steer = (float)KP * ((float)pos / 7000.0f) * MAX_STEER; //归一化pos
+
 	
 	if(pos == GRAY_ALL_BLACK )  //全黑
 		{
-		   Motor_SetSpeed(MOTOR_A, BASE_SPEED);    
-		   Motor_SetSpeed(MOTOR_B, BASE_SPEED);   
+		    target_left = 0;			
+			target_right = 0;
+			s_left_integral  = 0;    // 清零积分
+			s_right_integral = 0;
 			return;
 		}
 		
 	else if(pos == GRAY_ALL_WHITE)  //全白
 		{
-		   Motor_SetSpeed(MOTOR_A, 0);    
-		   Motor_SetSpeed(MOTOR_B, 0);
+		    target_left = 0;			
+			target_right = 0;
+			s_left_integral  = 0;    // 清零积分
+			s_right_integral = 0;
 			return;
 		}
 		
 	else
 		{
-			left = BASE_SPEED + steer;
-			right = BASE_SPEED - steer;
-		
-//		pwm限幅
-		if (left  < MIN_SPEED)  left  = MIN_SPEED;
-		if (left  > MAX_SPEED)  left  = MAX_SPEED;
-		if (right < MIN_SPEED)  right = MIN_SPEED;
-		if (right > MAX_SPEED)  right = MAX_SPEED;
+			target_left  = (int16_t)(BASE_SPEED + steer);
+			target_right = (int16_t)(BASE_SPEED - steer);
 		}
-
- 
-    Motor_SetSpeed(MOTOR_A, left);    /* A = 左轮 */
-    Motor_SetSpeed(MOTOR_B, right);    /* B = 右轮 */
+		
+//		rpm限幅
+		if (target_left  < TARGET_MIN) target_left  = TARGET_MIN;
+		if (target_left  > TARGET_MAX) target_left  = TARGET_MAX;
+		if (target_right < TARGET_MIN) target_right = TARGET_MIN;
+		if (target_right > TARGET_MAX) target_right = TARGET_MAX;
+		
+		printf("%d,%d,%d,%d,%d\n", pos, target_left, target_right,
+       (int)Encoder_GetSpeed_Left(), (int)Encoder_GetSpeed_Right());
 }
+ 
+   
+
 //==== 速度环PI: 每10ms调用一次, 让左右轮各自达到TARGET_SPEED ====
-void Speed_Control(void)
+void APP_Speed_Control(void)
 	{
-		int32_t err_left = TARGET_SPEED - Encoder_GetSpeed_Left();
-		int32_t err_right = TARGET_SPEED - Encoder_GetSpeed_Right();
+		int32_t err_left = target_left - Encoder_GetSpeed_Left();
+		int32_t err_right = target_right - Encoder_GetSpeed_Right();
 		int32_t pwm_left,pwm_right;
 		s_left_integral +=err_left;
 		s_right_integral += err_right;

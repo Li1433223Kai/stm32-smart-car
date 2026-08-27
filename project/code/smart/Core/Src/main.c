@@ -126,15 +126,17 @@ int main(void)
 		if(HAL_GetTick() - last_speed_time >= ENCODER_SAMPLE_MS)
 			{
 				last_speed_time = HAL_GetTick();
+				
 				Encoder_UpdateSpeed();  /* 更新左右速度 */
-				Speed_Control();
+				App_Position_Control();
+				APP_Speed_Control();
 				static int16_t count;
-				count++;
-				if(count>10)
-					{
-					count = 0;
-					printf("%d,%d\n", Encoder_GetSpeed_Left(), Encoder_GetSpeed_Right());
-					}
+//				count++;
+//				if(count>10)
+//					{
+//					count = 0;
+//					printf("%d,%d\n", Encoder_GetSpeed_Left(), Encoder_GetSpeed_Right());
+//					}
 			}
 		}
   /* USER CODE END 3 */
