@@ -130,10 +130,10 @@ int main(void)
 				Speed_Control();
 				static int16_t count;
 				count++;
-				if(count>200)
+				if(count>10)
 					{
 					count = 0;
-					printf("L=%d R=%d\r\n", Encoder_GetSpeed_Left(), Encoder_GetSpeed_Right());
+					printf("%d,%d\n", Encoder_GetSpeed_Left(), Encoder_GetSpeed_Right());
 					}
 			}
 		}
