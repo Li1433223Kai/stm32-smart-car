@@ -8,8 +8,7 @@
  */
 void App_Init(void);
 
-void App_Follow(void);
-
-void Speed_Control(void);
+void App_Position_Control(void);
+void APP_Speed_Control(void);
 
 #endif
