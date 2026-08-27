@@ -28,6 +28,7 @@
 #include "bsp_motor.h"
 #include "bsp_gray.h"
 #include "app.h"
+#include "bsp_encoder.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -71,8 +72,9 @@ int main(void)
 
   /* USER CODE BEGIN 1 */
    uint32_t last_tick = 0;
-   uint32_t last_print_tick = 0;
    const uint32_t PERIOD = 20;
+   uint32_t last_speed_time = 0;
+   uint32_t boot_time = HAL_GetTick();   /* 记录上电时刻, 用于延迟启动 */
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -95,12 +97,15 @@ int main(void)
   MX_GPIO_Init();
   MX_USART1_UART_Init();
   MX_TIM3_Init();
+  MX_TIM2_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
   Motor_Init();
   Motor_StopAll();     /* 开始循迹前电机先停 */
   Gray_Init();
   App_Init();
-  printf("follow test start\r\n");
+  Encoder_Init();
+  printf("control test start\r\n");
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -110,18 +115,30 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    if(HAL_GetTick() - last_tick >= PERIOD)
+	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+	 
+	if(HAL_GetTick() - boot_time < 500)
+	{
+		Motor_StopAll();
+	}
+	else
 		{
-			last_tick = HAL_GetTick();
-			App_Follow();
-		}
-	if(HAL_GetTick() - last_print_tick >= 200)
-		{
-		    last_print_tick = HAL_GetTick();
-			printf("pos:%d\r\n",Gray_GetPosition());
+		if(HAL_GetTick() - last_speed_time >= ENCODER_SAMPLE_MS)
+			{
+				last_speed_time = HAL_GetTick();
+				Encoder_UpdateSpeed();  /* 更新左右速度 */
+				Speed_Control();
+				static int16_t count;
+				count++;
+				if(count>200)
+					{
+					count = 0;
+					printf("L=%d R=%d\r\n", Encoder_GetSpeed_Left(), Encoder_GetSpeed_Right());
+					}
+			}
 		}
   /* USER CODE END 3 */
-  }
+	}
 }
 
 /**
@@ -185,7 +202,7 @@ void Error_Handler(void)
   }
   /* USER CODE END Error_Handler_Debug */
 }
-#ifdef USE_FULL_ASSERT
+#ifndef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.
