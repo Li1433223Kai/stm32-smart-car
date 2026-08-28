@@ -60,13 +60,14 @@
 
 ## 四、接下来要做什么（未完成）
 
-### 1. OLED 显示（待做）
+### 1. OLED 显示（进行中）
 - 江科大套件 0.96 寸 4 针 I2C OLED（SSD1306，地址 0x3C）
-- **引脚冲突**：I2C1 默认 PB6/PB7 被右编码器占用
-- **方案一**：硬件 I2C1 重映射到 PB8/PB9，杜邦线引出 OLED
-- **方案二**：软件 I2C（江科大驱动），OLED 接任意空闲 GPIO（如 PA6/PA7）
-- 实时显示：当前状态、左右轮速度(RPM)、目标速度、pos 偏差
-- **待确认**：接 PB8/PB9 或 PA6/PA7、3.3V还是5V供电、有无江科大驱动库
+- **方案已定：硬件 I2C1 重映射到 PB8(SCL)/PB9(SDA)**，3.3V 供电
+- **已完成**：`BSP/bsp_oled.c/.h`（标准 SSD1306 ASCII 驱动，基于 HAL_I2C_Mem_Write，8x16 字模，显示坐标 row0~3/col0~15）；`app.c` 增加 `App_OLED_Show()` 刷新数据面板；`main.c` 集成 OLED_Init + 每100ms刷新；`bsp_oled.c/.h` 已加入 Keil 工程 `f103.uvprojx`
+- **待你操作（CubeMX）**：在 .ioc 里给 I2C1 选 SCL=PB8/SDA=PB9（重映射），重新生成 i2c.c/i2c.h，CubeMX 会自动启用 HAL_I2C 模块、引入 stm32f1xx_hal_i2c.c/.h 并加进 Keil 工程
+- 面板布局（4行）：行0 ST:状态 / 行1 目标速度 "T 150/150" / 行2 实测速度 "L 120 R 118" / 行3 位置偏差 "Pos 1250"；每100ms 刷新一次
+- **注意1**：CubeMX 重新生成 .uvprojx 时可能会清掉手工加入的 bsp_oled.c/.h，生成后需确认这两个文件仍在工程里
+- **注意2**：bsp_oled.c 依赖 CubeMX 生成的 i2c.c/i2c.h 里的 `hi2c1`，需先生成 I2C 后才能编译
 
 ### 2. 状态机重构（待做）
 - 把循迹 if-else 重构为状态机：IDLE / RUN / LOST / CROSS / STOP
