@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "i2c.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -29,6 +30,7 @@
 #include "bsp_gray.h"
 #include "app.h"
 #include "bsp_encoder.h"
+#include "bsp_oled.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -75,6 +77,8 @@ int main(void)
    const uint32_t PERIOD = 20;
    uint32_t last_speed_time = 0;
    uint32_t boot_time = HAL_GetTick();   /* 记录上电时刻, 用于延迟启动 */
+   uint32_t last_oled_time = 0;          /* OLED 上次刷新时刻 */
+   const uint32_t OLED_REFRESH_MS = 100;  /* OLED 每100ms刷新一次 */
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -99,12 +103,14 @@ int main(void)
   MX_TIM3_Init();
   MX_TIM2_Init();
   MX_TIM4_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
   Motor_Init();
   Motor_StopAll();     /* 开始循迹前电机先停 */
   Gray_Init();
   App_Init();
   Encoder_Init();
+  OLED_Init();
   printf("control test start\r\n");
   /* USER CODE END 2 */
 
@@ -131,13 +137,13 @@ int main(void)
 				App_Position_Control();
 				APP_Speed_Control();
 				static int16_t count;
-//				count++;
-//				if(count>10)
-//					{
-//					count = 0;
-//					printf("%d,%d\n", Encoder_GetSpeed_Left(), Encoder_GetSpeed_Right());
-//					}
 			}
+		}
+	/* OLED 数据面板按节拍刷新, 不阻塞控制循环 */
+	if(HAL_GetTick() - last_oled_time >= OLED_REFRESH_MS)
+		{
+			last_oled_time = HAL_GetTick();
+			App_OLED_Show();
 		}
   /* USER CODE END 3 */
 	}
@@ -204,7 +210,7 @@ void Error_Handler(void)
   }
   /* USER CODE END Error_Handler_Debug */
 }
-#ifndef USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.

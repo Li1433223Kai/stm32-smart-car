@@ -2,6 +2,7 @@
 #include "bsp_motor.h"
 #include "bsp_gray.h"
 #include "bsp_encoder.h"
+#include "bsp_oled.h"
 #include <stdio.h>
 //App__Position_Control位置环参数
 
@@ -21,6 +22,11 @@ static int32_t s_left_integral  = 0;
 static int32_t s_right_integral = 0;
 static int16_t target_left = 150 ;
 static int16_t target_right = 150;
+
+/* 最近一次显示刷新记录, 供 OLED 数据面板显示 */
+static int16_t s_display_pos      = 0;    /* 黑线位置 */
+static int16_t s_display_speed_L  = 0;    /* 左轮实测速度 */
+static int16_t s_display_speed_R  = 0;    /* 右轮实测速度 */
 /*
  * 循迹模块初始化
 */
@@ -43,6 +49,10 @@ void App_Position_Control(void)
 			target_right = 0;
 			s_left_integral  = 0;    // 清零积分
 			s_right_integral = 0;
+			/* 记录显示数据 */
+			s_display_pos     = pos;
+			s_display_speed_L = Encoder_GetSpeed_Left();
+			s_display_speed_R = Encoder_GetSpeed_Right();
 			return;
 		}
 		
@@ -52,6 +62,10 @@ void App_Position_Control(void)
 			target_right = 0;
 			s_left_integral  = 0;    // 清零积分
 			s_right_integral = 0;
+			/* 记录显示数据 */
+			s_display_pos     = pos;
+			s_display_speed_L = Encoder_GetSpeed_Left();
+			s_display_speed_R = Encoder_GetSpeed_Right();
 			return;
 		}
 		
@@ -69,6 +83,11 @@ void App_Position_Control(void)
 		
 		printf("%d,%d,%d,%d,%d\n", pos, target_left, target_right,
        (int)Encoder_GetSpeed_Left(), (int)Encoder_GetSpeed_Right());
+
+		/* 记录本次数据, 供 OLED 面板显示 */
+		s_display_pos     = pos;
+		s_display_speed_L = Encoder_GetSpeed_Left();
+		s_display_speed_R = Encoder_GetSpeed_Right();
 }
  
    
@@ -105,3 +124,44 @@ void APP_Speed_Control(void)
 		
 		
 	}
+
+/*
+ * 刷新 OLED 数据面板(由 main 主循环按节拍调用, 如100ms一次)
+ *
+ * 面板布局 (4行, 每行16字; 列从左到右0~15):
+ *   行0: ST:xxxx   (状态: RUN/LOST/CROSS/STOP)
+ *   行1: 目标速度   "T 150/150"  (左/右目标, 3位)
+ *   行2: 实测速度   "L 120 R 118" (左右轮实测RPM)
+ *   行3: 位置偏差   "Pos 1250"    (黑线位置, 连符号最多5位)
+ */
+void App_OLED_Show(void)
+{
+	/* 状态字符串: 依据当前位置环判定 */
+	const char *state_str;
+	if      (s_display_pos == GRAY_ALL_WHITE) state_str = "LOST";
+	else if (s_display_pos == GRAY_ALL_BLACK)  state_str = "CROSS";
+	else if (target_left == 0 && target_right == 0) state_str = "STOP";
+	else                                        state_str = "RUN";
+
+	OLED_Clear();
+
+	/* 行0: 状态 */
+	OLED_ShowString(0, 0, "ST:");
+	OLED_ShowString(0, 3, state_str);
+
+	/* 行1: 目标速度 "T 150/150" */
+	OLED_ShowString(1, 0,  "T ");
+	OLED_ShowNum(1, 2,  target_left);
+	OLED_ShowString(1, 6,  "/");
+	OLED_ShowNum(1, 7,  target_right);
+
+	/* 行2: 实测速度 "L 120 R 118" */
+	OLED_ShowString(2, 0,  "L ");
+	OLED_ShowNum(2, 2,  s_display_speed_L);
+	OLED_ShowString(2, 6,  "R ");
+	OLED_ShowNum(2, 8,  s_display_speed_R);
+
+	/* 行3: 位置偏差 */
+	OLED_ShowString(3, 0, "Pos ");
+	OLED_ShowNum(3, 4, s_display_pos);
+}
