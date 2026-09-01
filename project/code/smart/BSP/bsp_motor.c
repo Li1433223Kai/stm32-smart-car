@@ -156,3 +156,10 @@ void Motor_StopAll(void)
     Motor_Stop(MOTOR_A);
     Motor_Stop(MOTOR_B);
 }
+
+/* 两个电机同时刹车, 快速停转 */
+void Motor_BrakeAll(void)
+{
+    Motor_Brake(MOTOR_A);
+    Motor_Brake(MOTOR_B);
+}

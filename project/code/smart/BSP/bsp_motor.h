@@ -26,5 +26,6 @@ void Motor_SetSpeed(MotorID_t motor, int16_t speed);  /* 设置电机速度: spe
 void Motor_Stop(MotorID_t motor);            /* 滑行停止: 电机断电, 靠摩擦力慢慢停 */
 void Motor_Brake(MotorID_t motor);           /* 刹车: 电机两端短接, 快速停转 */
 void Motor_StopAll(void);                    /* 两个电机同时滑行停止 */
+void Motor_BrakeAll(void);                   /* 两个电机同时刹车, 快速停转 */
 
 #endif
