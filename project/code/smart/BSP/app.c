@@ -2,6 +2,7 @@
 #include "bsp_motor.h"
 #include "bsp_gray.h"
 #include "bsp_encoder.h"
+#include "bsp_key.h"
 #include "bsp_oled.h"
 #include <stdio.h>
 //App__Position_Control位置环参数
@@ -23,17 +24,26 @@ static int32_t s_right_integral = 0;
 static int16_t target_left = 150 ;
 static int16_t target_right = 150;
 
-/* 最近一次显示刷新记录, 供 OLED 数据面板显示 */
+//oled显示
 static int16_t s_display_pos      = 0;    /* 黑线位置 */
 static int16_t s_display_speed_L  = 0;    /* 左轮实测速度 */
 static int16_t s_display_speed_R  = 0;    /* 右轮实测速度 */
+
+static AppState_t s_state = APP_STATE_IDLE;
+static AppState_t s_prev_state = APP_STATE_IDLE;  /* 上次状态, 用于进入沿检测 */
+static uint32_t s_boot_time = 0;   /* 上电时刻 */
+static uint32_t s_print_time = 0;
 /*
  * 循迹模块初始化
 */
-void App_Init(void)
+
+	void App_Init(void)
 {
-    /* 暂无需要初始化的内容 */
+    s_state = APP_STATE_IDLE;
+    s_prev_state = APP_STATE_IDLE;
+    s_boot_time = HAL_GetTick();   /* 记录上电时刻 */
 }
+
 
 //执行位置环pid
 void App_Position_Control(void)
@@ -42,52 +52,22 @@ void App_Position_Control(void)
     pos = Gray_GetPosition();   //误差
     float steer = (float)KP * ((float)pos / 7000.0f) * MAX_STEER; //归一化pos
 
-	
-	if(pos == GRAY_ALL_BLACK )  //全黑
-		{
-		    target_left = 0;			
-			target_right = 0;
-			s_left_integral  = 0;    // 清零积分
-			s_right_integral = 0;
-			/* 记录显示数据 */
-			s_display_pos     = pos;
-			s_display_speed_L = Encoder_GetSpeed_Left();
-			s_display_speed_R = Encoder_GetSpeed_Right();
-			return;
-		}
-		
-	else if(pos == GRAY_ALL_WHITE)  //全白
-		{
-		    target_left = 0;			
-			target_right = 0;
-			s_left_integral  = 0;    // 清零积分
-			s_right_integral = 0;
-			/* 记录显示数据 */
-			s_display_pos     = pos;
-			s_display_speed_L = Encoder_GetSpeed_Left();
-			s_display_speed_R = Encoder_GetSpeed_Right();
-			return;
-		}
-		
-	else
-		{
-			target_left  = (int16_t)(BASE_SPEED + steer);
-			target_right = (int16_t)(BASE_SPEED - steer);
-		}
-		
-//		rpm限幅
-		if (target_left  < TARGET_MIN) target_left  = TARGET_MIN;
-		if (target_left  > TARGET_MAX) target_left  = TARGET_MAX;
-		if (target_right < TARGET_MIN) target_right = TARGET_MIN;
-		if (target_right > TARGET_MAX) target_right = TARGET_MAX;
-		
-		printf("%d,%d,%d,%d,%d\n", pos, target_left, target_right,
-       (int)Encoder_GetSpeed_Left(), (int)Encoder_GetSpeed_Right());
+	target_left  = (int16_t)(BASE_SPEED + steer);
+	target_right = (int16_t)(BASE_SPEED - steer);
 
-		/* 记录本次数据, 供 OLED 面板显示 */
-		s_display_pos     = pos;
-		s_display_speed_L = Encoder_GetSpeed_Left();
-		s_display_speed_R = Encoder_GetSpeed_Right();
+//	rpm限幅
+	if (target_left  < TARGET_MIN) target_left  = TARGET_MIN;
+	if (target_left  > TARGET_MAX) target_left  = TARGET_MAX;
+	if (target_right < TARGET_MIN) target_right = TARGET_MIN;
+	if (target_right > TARGET_MAX) target_right = TARGET_MAX;
+	
+//	printf("%d,%d,%d,%d,%d\n", pos, target_left, target_right,
+//   (int)Encoder_GetSpeed_Left(), (int)Encoder_GetSpeed_Right());
+
+	/* 记录本次数据, 供 OLED 面板显示 */
+	s_display_pos     = pos;
+	s_display_speed_L = Encoder_GetSpeed_Left();
+	s_display_speed_R = Encoder_GetSpeed_Right();
 }
  
    
@@ -138,11 +118,13 @@ void App_OLED_Show(void)
 {
 	/* 状态字符串: 依据当前位置环判定 */
 	const char *state_str;
-	if      (s_display_pos == GRAY_ALL_WHITE) state_str = "LOST";
-	else if (s_display_pos == GRAY_ALL_BLACK)  state_str = "CROSS";
-	else if (target_left == 0 && target_right == 0) state_str = "STOP";
-	else                                        state_str = "RUN";
-
+	switch (s_state) {
+    case APP_STATE_IDLE:  state_str = "IDLE";  break;
+    case APP_STATE_RUN:   state_str = "RUN";   break;
+    case APP_STATE_LOST:  state_str = "LOST";  break;
+    case APP_STATE_CROSS: state_str = "CROSS"; break;
+    default:              state_str = "IDLE";  break;
+}                                      
 	OLED_Clear();
 
 	/* 行0: 状态 */
@@ -164,4 +146,66 @@ void App_OLED_Show(void)
 	/* 行3: 位置偏差 */
 	OLED_ShowString(3, 0, "Pos ");
 	OLED_ShowNum(3, 4, s_display_pos);
+}
+
+static void App_Stop(void) 
+	{ 
+		target_left=0;
+		target_right=0;
+		s_left_integral=0;
+		s_right_integral=0;
+	}
+
+void App_State_Update(void)
+{
+    /* 读按键边沿: Key_Scan() 返回1=刚按下(从松到按) */
+    uint8_t key_edge = Key_Scan();
+
+    switch (s_state)
+		{
+		case APP_STATE_IDLE:
+		App_Stop();
+		if ((HAL_GetTick() - s_boot_time) > 200 && key_edge)   /* 相减>200ms */
+			s_state = APP_STATE_RUN;
+		break;
+
+		case APP_STATE_RUN:
+			{
+				int16_t pos = Gray_GetPosition();
+				if (pos == GRAY_ALL_WHITE)      
+					s_state = APP_STATE_LOST;   /* 丢线 */
+				else if (pos == GRAY_ALL_BLACK) 
+					s_state = APP_STATE_CROSS;  /* 全黑 */
+				else
+					App_Position_Control();           /* 正常循迹差速 */
+			}
+			break;
+
+		case APP_STATE_LOST:
+			if (s_prev_state != APP_STATE_LOST)
+				Motor_BrakeAll();              /* 刚进入: 快速刹停一次 */
+			else
+				App_Stop();                    /* 停留: target=0 保持静止 */
+			if (key_edge)
+				s_state = APP_STATE_RUN;      /* 摆回线上后按按键重新起步 */
+			break;
+
+		case APP_STATE_CROSS:
+			if (s_prev_state != APP_STATE_CROSS)
+				Motor_BrakeAll();       /* 刚进入: 快速刹停一次 */
+			else
+				App_Stop();                    /* 停留: target=0 保持静止 */
+			if (key_edge)
+				s_state = APP_STATE_RUN;      /* 离开十字后按按键重新起步 */
+			break;
+		}
+		s_prev_state = s_state;   /* 记录本次状态, 供下次进入沿检测 */
+		/* 每500ms打印一次, 避免刷屏/拖慢控制 */
+	if (HAL_GetTick() - s_print_time >= 500)
+		{
+		s_print_time = HAL_GetTick();
+		printf("ST:%d pos:%d L_t:%d R_t:%d L_s:%d R_s:%d\n",
+		s_state, s_display_pos, target_left, target_right,
+		(int)Encoder_GetSpeed_Left(), (int)Encoder_GetSpeed_Right());
+		}
 }

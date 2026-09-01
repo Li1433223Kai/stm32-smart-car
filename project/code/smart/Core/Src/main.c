@@ -31,6 +31,7 @@
 #include "app.h"
 #include "bsp_encoder.h"
 #include "bsp_oled.h"
+#include "bsp_key.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -51,7 +52,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+#define CONTROL_TICK_MS  ENCODER_SAMPLE_MS
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -73,10 +74,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-   uint32_t last_tick = 0;
-   const uint32_t PERIOD = 20;
    uint32_t last_speed_time = 0;
-   uint32_t boot_time = HAL_GetTick();   /* 记录上电时刻, 用于延迟启动 */
    uint32_t last_oled_time = 0;          /* OLED 上次刷新时刻 */
    const uint32_t OLED_REFRESH_MS = 100;  /* OLED 每100ms刷新一次 */
   /* USER CODE END 1 */
@@ -111,6 +109,7 @@ int main(void)
   App_Init();
   Encoder_Init();
   OLED_Init();
+  Key_Init();
   printf("control test start\r\n");
   /* USER CODE END 2 */
 
@@ -122,32 +121,26 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-	 
-	if(HAL_GetTick() - boot_time < 500)
-	{
-		Motor_StopAll();
-	}
-	else
+	
+	if(HAL_GetTick() - last_speed_time >= CONTROL_TICK_MS)
 		{
-		if(HAL_GetTick() - last_speed_time >= ENCODER_SAMPLE_MS)
-			{
-				last_speed_time = HAL_GetTick();
-				
-				Encoder_UpdateSpeed();  /* 更新左右速度 */
-				App_Position_Control();
-				APP_Speed_Control();
-				static int16_t count;
-			}
+			last_speed_time = HAL_GetTick();
+			
+			Encoder_UpdateSpeed();  /* 更新左右速度 */
+			App_State_Update();
+			APP_Speed_Control();
 		}
+		
 	/* OLED 数据面板按节拍刷新, 不阻塞控制循环 */
-	if(HAL_GetTick() - last_oled_time >= OLED_REFRESH_MS)
-		{
-			last_oled_time = HAL_GetTick();
-			App_OLED_Show();
-		}
+//	if(HAL_GetTick() - last_oled_time >= OLED_REFRESH_MS)
+//		{
+//			last_oled_time = HAL_GetTick();
+//			App_OLED_Show();
+//		}
+   }
   /* USER CODE END 3 */
-	}
 }
+  
 
 /**
   * @brief System Clock Configuration
@@ -191,7 +184,8 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 int fputc(int ch, FILE *f)
 {
-    HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, HAL_MAX_DELAY);
+    /* 50ms超时: 串口异常时放弃发送, 不阻塞主循环 */
+    HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, 50);
     return ch;
 }
 /* USER CODE END 4 */
