@@ -7,11 +7,11 @@
 #include <stdio.h>
 //App__Position_Control位置环参数
 
-#define KP              1
-#define TARGET_MIN      100
+#define KP              1.5
+#define TARGET_MIN      40
 #define TARGET_MAX      200
-#define BASE_SPEED      150
-#define MAX_STEER       50
+#define BASE_SPEED      120
+#define MAX_STEER       80
 /* ==== 速度环PID参数 ==== */
 
 #define PID_KP          15     /* 比例, 先小逐步调大 */
@@ -21,8 +21,8 @@
 
 static int32_t s_left_integral  = 0;
 static int32_t s_right_integral = 0;
-static int16_t target_left = 150 ;
-static int16_t target_right = 150;
+static int16_t target_left = 100 ;
+static int16_t target_right = 100;
 
 //oled显示
 static int16_t s_display_pos      = 0;    /* 黑线位置 */
