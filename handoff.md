@@ -37,7 +37,7 @@
 - **位置环（外环）** `App_Position_Control()`：读灰度 pos → P 控制算左右目标速度(RPM)，差速转向
 - **速度环（内环）** `Speed_Control()`：编码器反馈 → PI 控制 → PWM
 - 整数限幅：`PID_KP=15, PID_KI=1, INTEGRAL_MAX=2000, PWM_LIMIT=7200`
-- 位置环参数：`KP=1, BASE_SPEED=150, TARGET_MIN=100, TARGET_MAX=200, MAX_STEER=50`
+- 位置环参数：`KP=1.5, BASE_SPEED=120, TARGET_MIN=40, TARGET_MAX=200, MAX_STEER=80`
 - 转向量：`steer = KP * (pos/7000) * MAX_STEER`
 - **状态机**：`App_State_Update()` 每 10ms 调度 IDLE/RUN/LOST/CROSS。IDLE 停车按 PA8 启动；RUN 正常压线跑位置环、全白→LOST、全黑→CROSS；LOST/CROSS 刚进入快速刹车一次、停留 target=0 保持静止，**按 PA8 可回到 RUN 重新起步**（不用断电重启）
 
