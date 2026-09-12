@@ -52,7 +52,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-#define CONTROL_TICK_MS  ENCODER_SAMPLE_MS
+#define CONTROL_TICK_MS  10
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -108,7 +108,7 @@ int main(void)
   Gray_Init();
   App_Init();
   Encoder_Init();
-  OLED_Init();
+//  OLED_Init();
   Key_Init();
   printf("control test start\r\n");
   /* USER CODE END 2 */

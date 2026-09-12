@@ -30,7 +30,7 @@ static int16_t s_display_speed_L  = 0;    /* 左轮实测速度 */
 static int16_t s_display_speed_R  = 0;    /* 右轮实测速度 */
 
 static AppState_t s_state = APP_STATE_IDLE;
-static AppState_t s_prev_state = APP_STATE_IDLE;  /* 上次状态, 用于进入沿检测 */
+static uint8_t    s_brake = 0;     /* 1=刹车保持: 速度环不输出, 维持短接刹车 */
 static uint32_t s_boot_time = 0;   /* 上电时刻 */
 static uint32_t s_print_time = 0;
 /*
@@ -40,16 +40,14 @@ static uint32_t s_print_time = 0;
 	void App_Init(void)
 {
     s_state = APP_STATE_IDLE;
-    s_prev_state = APP_STATE_IDLE;
+    s_brake = 0;
     s_boot_time = HAL_GetTick();   /* 记录上电时刻 */
 }
 
 
-//执行位置环pid
-void App_Position_Control(void)
+//执行位置环pid (pos 由调用者传入: 本拍已读到的灰度位置, 避免重复读灰度)
+void App_Position_Control(int16_t pos)
 {
-    int16_t pos;
-    pos = Gray_GetPosition();   //误差
     float steer = (float)KP * ((float)pos / 7000.0f) * MAX_STEER; //归一化pos
 
 	target_left  = (int16_t)(BASE_SPEED + steer);
@@ -60,14 +58,6 @@ void App_Position_Control(void)
 	if (target_left  > TARGET_MAX) target_left  = TARGET_MAX;
 	if (target_right < TARGET_MIN) target_right = TARGET_MIN;
 	if (target_right > TARGET_MAX) target_right = TARGET_MAX;
-	
-//	printf("%d,%d,%d,%d,%d\n", pos, target_left, target_right,
-//   (int)Encoder_GetSpeed_Left(), (int)Encoder_GetSpeed_Right());
-
-	/* 记录本次数据, 供 OLED 面板显示 */
-	s_display_pos     = pos;
-	s_display_speed_L = Encoder_GetSpeed_Left();
-	s_display_speed_R = Encoder_GetSpeed_Right();
 }
  
    
@@ -75,9 +65,21 @@ void App_Position_Control(void)
 //==== 速度环PI: 每10ms调用一次, 让左右轮各自达到TARGET_SPEED ====
 void APP_Speed_Control(void)
 	{
-		int32_t err_left = target_left - Encoder_GetSpeed_Left();
-		int32_t err_right = target_right - Encoder_GetSpeed_Right();
+		int32_t err_left;
+		int32_t err_right;
 		int32_t pwm_left,pwm_right;
+
+		/* 刹车保持期间不输出速度环:
+		 * 否则本函数里的 Motor_SetSpeed 会重写方向引脚与PWM,
+		 * 把 Motor_BrakeAll() 设的短接刹车覆盖掉(只剩几十微秒) */
+		if (s_brake)
+			{
+				Motor_BrakeAll();    /* 幂等: 持续维持刹车态 */
+				return;
+			}
+
+		err_left = target_left - Encoder_GetSpeed_Left();
+		err_right = target_right - Encoder_GetSpeed_Right();
 		s_left_integral +=err_left;
 		s_right_integral += err_right;
 		
@@ -160,6 +162,7 @@ void App_State_Update(void)
 {
     /* 读按键边沿: Key_Scan() 返回1=刚按下(从松到按) */
     uint8_t key_edge = Key_Scan();
+    AppState_t prev_state = s_state;   /* 本拍入口状态, 用于检测状态转移 */
 
     switch (s_state)
 		{
@@ -172,34 +175,42 @@ void App_State_Update(void)
 		case APP_STATE_RUN:
 			{
 				int16_t pos = Gray_GetPosition();
+				s_display_pos = pos;            /* 先记录(含 9999/-9999 哨兵), 供打印/OLED */
 				if (pos == GRAY_ALL_WHITE)      
 					s_state = APP_STATE_LOST;   /* 丢线 */
 				else if (pos == GRAY_ALL_BLACK) 
 					s_state = APP_STATE_CROSS;  /* 全黑 */
 				else
-					App_Position_Control();           /* 正常循迹差速 */
+					App_Position_Control(pos);        /* 正常循迹差速(复用本拍已读的 pos) */
 			}
 			break;
 
+		/* LOST(丢线) 与 CROSS(十字): 刹车已在转移当拍执行并保持, 这里只处理恢复 */
 		case APP_STATE_LOST:
-			if (s_prev_state != APP_STATE_LOST)
-				Motor_BrakeAll();              /* 刚进入: 快速刹停一次 */
-			else
-				App_Stop();                    /* 停留: target=0 保持静止 */
-			if (key_edge)
-				s_state = APP_STATE_RUN;      /* 摆回线上后按按键重新起步 */
-			break;
-
 		case APP_STATE_CROSS:
-			if (s_prev_state != APP_STATE_CROSS)
-				Motor_BrakeAll();       /* 刚进入: 快速刹停一次 */
-			else
-				App_Stop();                    /* 停留: target=0 保持静止 */
 			if (key_edge)
-				s_state = APP_STATE_RUN;      /* 离开十字后按按键重新起步 */
+				s_state = APP_STATE_RUN;      /* 摆回线上/离开十字后重新起步 */
 			break;
 		}
-		s_prev_state = s_state;   /* 记录本次状态, 供下次进入沿检测 */
+
+		/* ==== 状态转移动作: 统一在转移的当拍执行, 必然早于本拍的速度环 ==== */
+		if (s_state != prev_state)
+			{
+				if (s_state == APP_STATE_LOST || s_state == APP_STATE_CROSS)
+					{
+						App_Stop();          /* 先清目标+积分, 消除残留目标驱动 */
+						Motor_BrakeAll();    /* 立即短接刹车 */
+						s_brake = 1;         /* 保持刹车: 速度环不再输出 */
+					}
+				else
+					{
+						s_brake = 0;         /* 离开停车态(如回 RUN): 解除刹车保持 */
+					}
+			}
+		/* 显示快照: 每拍更新(含停车状态), 否则 OLED/打印会停留在最后一次 RUN 的旧值 */
+		s_display_speed_L = Encoder_GetSpeed_Left();
+		s_display_speed_R = Encoder_GetSpeed_Right();
+
 		/* 每500ms打印一次, 避免刷屏/拖慢控制 */
 	if (HAL_GetTick() - s_print_time >= 500)
 		{
