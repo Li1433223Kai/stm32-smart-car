@@ -4,7 +4,7 @@
 #include "main.h"
 
 #define ENCODER_PULSE_PER_REV   (20 * 13 * 4)   /* 1040 */
-#define ENCODER_SAMPLE_MS         10
+
 
 /* 编码器初始化：启动 TIM2(左) 和 TIM4(右) 编码器计数 */
 void Encoder_Init(void);

@@ -43,8 +43,8 @@ void Motor_Init(void)
  *   xIN1=1, xIN2=0, PWM=H  → 正转
  *   xIN1=0, xIN2=1, PWM=H  → 反转
  *   xIN1=0, xIN2=0, PWM=x  → 滑行停止(高阻态)
- *   xIN1=1, xIN2=1, PWM=H  → 刹车(两端短接)
- *   xIN1=1, xIN2=1, PWM=L  → 高阻态(非刹车!)
+ *   xIN1=1, xIN2=1, PWM=x  → 刹车(两端短接)
+ *   
  */
 void Motor_SetSpeed(MotorID_t motor, int16_t speed)
 {
