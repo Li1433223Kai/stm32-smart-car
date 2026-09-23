@@ -51,12 +51,11 @@ void HardFault_Handler(void);
 void MemManage_Handler(void);
 void BusFault_Handler(void);
 void UsageFault_Handler(void);
-void SVC_Handler(void);
 void DebugMon_Handler(void);
-void PendSV_Handler(void);
-void SysTick_Handler(void);
 /* USER CODE BEGIN EFP */
-
+/* SVC_Handler / PendSV_Handler / SysTick_Handler 已交由 FreeRTOS port.c 接管
+ * (port.c 中以 __attribute__((weak, alias(...))) 提供实现)
+ * 此处若再定义会覆盖 port.c 的实现，导致任务切换与 tick 失效 —— 故移除声明 */
 /* USER CODE END EFP */
 
 #ifdef __cplusplus

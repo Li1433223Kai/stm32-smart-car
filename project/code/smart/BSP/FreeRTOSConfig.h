@@ -84,7 +84,12 @@
 
 #define configUSE_PREEMPTION		1
 #define configUSE_IDLE_HOOK			0
-#define configUSE_TICK_HOOK			0
+/* 开启 tick hook：在 vApplicationTickHook() 中调用 HAL_IncTick()，
+ * 把 HAL 时基挂到 FreeRTOS tick 上（见 BSP/app.c）。
+ * 原因：SysTick_Handler 已交由 FreeRTOS port.c 接管，
+ *       原 stm32f1xx_it.c 里的 HAL_IncTick() 被移除，
+ *       若不在此处补回，HAL_GetTick() 将恒为 0，main 循环节拍判断失效。 */
+#define configUSE_TICK_HOOK			1
 #define configCPU_CLOCK_HZ			( ( unsigned long ) 72000000 )	
 #define configTICK_RATE_HZ			( ( TickType_t ) 1000 )
 #define configMAX_PRIORITIES		( 5 )
@@ -94,6 +99,13 @@
 #define configUSE_TRACE_FACILITY	0
 #define configUSE_16_BIT_TICKS		0
 #define configIDLE_SHOULD_YIELD		1
+#define configUSE_MUTEXES			1
+#define configUSE_RECURSIVE_MUTEXES	1
+#define configUSE_COUNTING_SEMAPHORES 1
+#define configQUEUE_REGISTRY_SIZE	8
+#define configCHECK_FOR_STACK_OVERFLOW	2
+#define configUSE_MALLOC_FAILED_HOOK	1
+#define configUSE_APPLICATION_TASK_TAG	0
 
 /* Co-routine definitions. */
 #define configUSE_CO_ROUTINES 		0
@@ -123,6 +135,48 @@ priority values, 0 to 15.  This must correspond to the
 configKERNEL_INTERRUPT_PRIORITY setting.  Here 15 corresponds to the lowest
 NVIC value of 255. */
 #define configLIBRARY_KERNEL_INTERRUPT_PRIORITY	15
+
+/*-----------------------------------------------------------
+ * Cortex-M3 内核相关（野火模板缺失，必须补充）
+ *----------------------------------------------------------*/
+
+/* STM32F1 的 NVIC 优先级寄存器只实现高 4 位，
+ * 此值必须与 stm32f1xx_hal_conf.h 中的 __NVIC_PRIO_BITS 保持一致（均为 4）。
+ * 不一致会在 vPortValidateInterruptPriority() 中触发 configASSERT，
+ * 表现为上电后静默卡死，无任何编译/链接错误。 */
+#define configPRIO_BITS				4
+
+/*-----------------------------------------------------------
+ * 中断向量表钩子名称映射（本版本 FreeRTOS 必需）
+ *----------------------------------------------------------
+ * port.c 中定义的函数名为带前缀的 vPortSVCHandler /
+ * xPortPendSVHandler / xPortSysTickHandler，而启动文件
+ * (startup_stm32f103xb.s) 的向量表引用的是 SVC_Handler /
+ * PendSV_Handler / SysTick_Handler，两者名字不同，无法自动接管。
+ *
+ * 通过以下宏做名称替换：编译 port.c 时名字被替换为无前缀版本，
+ * 从而以强符号定义覆盖启动文件中的 [WEAK] 空壳实现。
+ *
+ * 若缺少这三个宏，编译链接都不会报错，但向量表仍指向启动文件的
+ * 空函数 —— 任务切换与 tick 全部失效，表现为"上电后一个任务都不跑"。
+ */
+#define vPortSVCHandler				SVC_Handler
+#define xPortPendSVHandler			PendSV_Handler
+#define xPortSysTickHandler			SysTick_Handler
+
+/*-----------------------------------------------------------
+ * 断言与钩子函数声明
+ *----------------------------------------------------------*/
+
+/* 断言失败时关中断并死循环，便于在调试器中定位。
+ * FreeRTOS 的配置类错误（优先级、堆溢出等）都靠它暴露，
+ * 开发阶段务必保留。 */
+#define configASSERT( x )	if( ( x ) == 0 ) { taskDISABLE_INTERRUPTS(); for( ;; ); }
+
+/* 注意：hook 函数的原型声明不放在本文件。
+ * 原因：本文件由 FreeRTOS.h 最先 include，此时 TaskHandle_t 等类型尚未定义，
+ *       在此声明会导致 "identifier TaskHandle_t is undefined"。
+ *       hook 实现与原型统一放在 BSP/freertos_hooks.c。 */
 
 #endif /* FREERTOS_CONFIG_H */
 

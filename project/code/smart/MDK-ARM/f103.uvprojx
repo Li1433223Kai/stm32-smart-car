@@ -566,6 +566,11 @@
               <FileType>1</FileType>
               <FilePath>../BSP/bsp_key.c</FilePath>
             </File>
+            <File>
+              <FileName>freertos_hooks.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../BSP/freertos_hooks.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
