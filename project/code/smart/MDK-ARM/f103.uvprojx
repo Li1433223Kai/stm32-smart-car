@@ -340,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F103xB</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../BSP;../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;../Drivers/STM32F1xx_HAL_Driver/Inc;../Drivers/CMSIS/Device/ST/STM32F1xx/Include;../Drivers/CMSIS/Include</IncludePath>
+              <IncludePath>../Core/Inc;../BSP;../freeRTOS/include;../freeRTOS/port/RVDS/ARM_CM3;../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;../Drivers/STM32F1xx_HAL_Driver/Inc;../Drivers/CMSIS/Device/ST/STM32F1xx/Include;../Drivers/CMSIS/Include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -394,46 +394,6 @@
         <Group>
           <GroupName>Application/User/Core</GroupName>
           <Files>
-            <File>
-              <FileName>bsp_motor.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../BSP/bsp_motor.c</FilePath>
-            </File>
-            <File>
-              <FileName>bsp_gray.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../BSP/bsp_gray.c</FilePath>
-            </File>
-            <File>
-              <FileName>app.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\BSP\app.c</FilePath>
-            </File>
-            <File>
-              <FileName>app.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\BSP\app.h</FilePath>
-            </File>
-            <File>
-              <FileName>bsp_encoder.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\BSP\bsp_encoder.c</FilePath>
-            </File>
-            <File>
-              <FileName>bsp_encoder.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\BSP\bsp_encoder.h</FilePath>
-            </File>
-            <File>
-              <FileName>bsp_oled.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\BSP\bsp_oled.c</FilePath>
-            </File>
-            <File>
-              <FileName>bsp_oled.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\BSP\bsp_oled.h</FilePath>
-            </File>
             <File>
               <FileName>main.c</FileName>
               <FileType>1</FileType>
@@ -571,15 +531,85 @@
               <FileType>1</FileType>
               <FilePath>../Core/Src/stm32f1xx_hal_msp.c</FilePath>
             </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>BSP</GroupName>
+          <Files>
             <File>
-              <FileName>bsp_key.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\BSP\bsp_key.h</FilePath>
+              <FileName>app.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../BSP/app.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_motor.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../BSP/bsp_motor.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_encoder.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../BSP/bsp_encoder.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_gray.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../BSP/bsp_gray.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_oled.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../BSP/bsp_oled.c</FilePath>
             </File>
             <File>
               <FileName>bsp_key.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\BSP\bsp_key.c</FilePath>
+              <FilePath>../BSP/bsp_key.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>FreeRTOS</GroupName>
+          <Files>
+            <File>
+              <FileName>tasks.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../freeRTOS/src/tasks.c</FilePath>
+            </File>
+            <File>
+              <FileName>queue.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../freeRTOS/src/queue.c</FilePath>
+            </File>
+            <File>
+              <FileName>list.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../freeRTOS/src/list.c</FilePath>
+            </File>
+            <File>
+              <FileName>timers.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../freeRTOS/src/timers.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>FreeRTOS/Port</GroupName>
+          <Files>
+            <File>
+              <FileName>port.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../freeRTOS/port/RVDS/ARM_CM3/port.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>FreeRTOS/Heap</GroupName>
+          <Files>
+            <File>
+              <FileName>heap_4.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>../freeRTOS/port/MemMang/heap_4.c</FilePath>
             </File>
           </Files>
         </Group>
