@@ -32,6 +32,8 @@
 #include "bsp_encoder.h"
 #include "bsp_oled.h"
 #include "bsp_key.h"
+#include "FreeRTOS.h"
+#include "task.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -83,13 +85,16 @@ int main(void)
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
+  
 
   /* USER CODE BEGIN Init */
-
+  HAL_SuspendTick();
   /* USER CODE END Init */
 
   /* Configure the system clock */
   SystemClock_Config();
+  HAL_SuspendTick(); //成对存在
+
 
   /* USER CODE BEGIN SysInit */
 
@@ -111,9 +116,32 @@ int main(void)
 //  OLED_Init();
   Key_Init();
   printf("control test start\r\n");
+//  if(xTaskCreate(flipLED,"flipLED",configMINIMAL_STACK_SIZE,NULL,1,NULL) != pdPASS)
+//  {
+//	  printf("filpLED fail\r\n");
+//	  Error_Handler();
+//  }
+  
+//  if(xTaskCreate(run,"run",configMINIMAL_STACK_SIZE,NULL,1,NULL) != pdPASS)
+//  {
+//	  printf("run fail\r\n");
+//	  Error_Handler();
+//  }
+//  if(xTaskCreate(encoder,"encoder",configMINIMAL_STACK_SIZE,NULL,2,NULL) != pdPASS)
+//  {
+//	  printf("encoder  fail\r\n");
+//	  Error_Handler();
+//  }
+  if(xTaskCreate(gray,"gray",configMINIMAL_STACK_SIZE,NULL,2,NULL) != pdPASS)
+  {
+	  printf("gray  fail\r\n");
+	  Error_Handler();
+  }
+  vTaskStartScheduler();
   /* USER CODE END 2 */
 
   /* Infinite loop */
+  
   /* USER CODE BEGIN WHILE */
   while (1)
   {

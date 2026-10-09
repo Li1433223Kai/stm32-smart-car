@@ -4,6 +4,8 @@
 #include "bsp_encoder.h"
 #include "bsp_key.h"
 #include "bsp_oled.h"
+#include "FreeRTOS.h"
+#include "task.h"
 #include <stdio.h>
 //App__Position_Control位置环参数
 
@@ -220,3 +222,80 @@ void App_State_Update(void)
 		(int)Encoder_GetSpeed_Left(), (int)Encoder_GetSpeed_Right());
 		}
 }
+
+//freeRTOS
+
+void flipLED(void *pvParameters)
+{
+	(void)pvParameters;
+	for (;;)
+	{
+		vTaskDelay(pdMS_TO_TICKS(500));
+		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+//		uint32_t t0 = HAL_GetTick();
+//		vTaskDelay(pdMS_TO_TICKS(1000));
+//		uint32_t t1 = HAL_GetTick();
+//		printf("dt = %u\r\n", (unsigned)(t1 - t0));
+	}
+}
+
+void run(void *pvParameters)
+{
+	(void)pvParameters;
+	for (;;)
+	{
+		Motor_SetSpeed(MOTOR_A,1500);
+		Motor_SetSpeed(MOTOR_B,1500);
+		vTaskDelay(pdMS_TO_TICKS(2000));
+		Motor_BrakeAll();
+		vTaskDelay(pdMS_TO_TICKS(1000));
+		
+		Motor_SetSpeed(MOTOR_A,-1500);
+		Motor_SetSpeed(MOTOR_B,-1500);
+		vTaskDelay(pdMS_TO_TICKS(2000));
+		Motor_BrakeAll();
+		vTaskDelay(pdMS_TO_TICKS(1000));
+	}
+	
+}
+
+
+void encoder(void *pvParameters)
+{
+	(void)pvParameters;
+	TickType_t last_wake = xTaskGetTickCount();
+	uint16_t count = 0;
+	for (;;)
+	{
+		Encoder_UpdateSpeed();
+		count ++;
+		if(count >=50)
+		{
+		printf("%d,%d\r\n",Encoder_GetSpeed_Left(),Encoder_GetSpeed_Right());
+		count = 0;
+		}
+			vTaskDelayUntil(&last_wake,pdMS_TO_TICKS(10));
+		
+	}
+}
+
+void gray(void *pvParameters)
+{
+    (void)pvParameters;
+    TickType_t last_wake = xTaskGetTickCount();
+    uint16_t count = 0;
+
+    for (;;)
+    {
+        int16_t pos = Gray_GetPosition();
+
+        if (++count >= 50)          /* 500ms 打一次 */
+        {
+            count = 0;
+            printf("pos=%d\r\n", pos);
+        }
+
+        vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(10));
+    }
+}
+
