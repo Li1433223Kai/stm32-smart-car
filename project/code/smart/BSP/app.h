@@ -15,13 +15,6 @@ void App_State_Update(void);
 void App_Position_Control(int16_t pos);   /* pos 由调用者传入, 避免重复读灰度 */
 void APP_Speed_Control(void);
 
-void flipLED(void *pvParameters);
-void run(void *pvParameters);
-void encoder(void *pvParameters);
-void gray(void *pvParameters);
-void task1(void *pvParameters);
-void task2(void *pvParameters);
-
 void App_OLED_Show(void);
 
 #endif

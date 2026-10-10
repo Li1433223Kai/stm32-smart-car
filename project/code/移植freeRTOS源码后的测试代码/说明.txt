@@ -1,0 +1,34 @@
+这份代码是什么
+==============
+
+FreeRTOS V9.0.0 源码移植进本工程后，用来逐项验证 RTOS 运行时是否正常的测试代码快照。
+
+时间：2026-10-10
+对应提交：de1c294（同时打了 tag：v1.6-baseline）
+编译器：ARMCC AC5（V5.06 update 5）
+芯片：STM32F103C8T6
+
+这一版验证通过的内容（四项）
+------------------------------
+1. 调度器能跑 —— flipLED 任务翻 PC13，LED 500ms 闪烁
+2. 时基准 —— 任务内连测 18 次 HAL_GetTick() 差值，全部为 1000
+3. 三项外设回归 —— 电机 / 编码器 / 灰度搬进任务后行为与原裸机一致
+4. 多任务轮转 —— 两同优先级任务刷串口，1 与 2 成块交替，时间片生效
+
+这一版还做了什么
+----------------
+SysTick 提前使能导致的 HardFault（HAL_Init 里就开了 SysTick，而向量表已交给
+FreeRTOS、调度器还没起来）已修：HAL_Init() 后 + SystemClock_Config() 后
+各加一次 HAL_SuspendTick()。
+fputc 也改成纯寄存器版（不依赖 HAL_GetTick 做超时）。
+
+注意：这份代码的架构仍是「裸机前后台」——main.c 里的 while(1) 排在
+vTaskStartScheduler() 后面，是死代码；真正跑在 RTOS 上的只有 task1/task2
+这类测试任务，业务逻辑（循迹状态机、双闭环）还没搬进任务。
+
+里面哪些是测试代码
+------------------
+app.c 里的：flipLED、run、encoder、gray、task1、task2
+main.c 里：对应的 xTaskCreate 调用（部分已注释）
+
+这份快照仅供留存 / 给人看，主工程的开发在 project/code/smart/ 里继续。

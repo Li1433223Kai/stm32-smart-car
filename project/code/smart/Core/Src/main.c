@@ -116,38 +116,7 @@ int main(void)
 //  OLED_Init();
   Key_Init();
   printf("control test start\r\n");
-//  if(xTaskCreate(flipLED,"flipLED",configMINIMAL_STACK_SIZE,NULL,1,NULL) != pdPASS)
-//  {
-//	  printf("filpLED fail\r\n");
-//	  Error_Handler();
-//  }
-  
-//  if(xTaskCreate(run,"run",configMINIMAL_STACK_SIZE,NULL,1,NULL) != pdPASS)
-//  {
-//	  printf("run fail\r\n");
-//	  Error_Handler();
-//  }
-//  if(xTaskCreate(encoder,"encoder",configMINIMAL_STACK_SIZE,NULL,2,NULL) != pdPASS)
-//  {
-//	  printf("encoder  fail\r\n");
-//	  Error_Handler();
-//  }
-//  if(xTaskCreate(gray,"gray",configMINIMAL_STACK_SIZE,NULL,2,NULL) != pdPASS)
-//  {
-//	  printf("gray  fail\r\n");
-//	  Error_Handler();
-//  }
-  if(xTaskCreate(task1,"task1",configMINIMAL_STACK_SIZE,NULL,2,NULL) != pdPASS)
-  {
-	  printf("task1  fail\r\n");
-	  Error_Handler();
-  }
-  if(xTaskCreate(task2,"task2",configMINIMAL_STACK_SIZE,NULL,2,NULL) != pdPASS)
-  {
-	  printf("task2  fail\r\n");
-	  Error_Handler();
-  }
-  vTaskStartScheduler();
+//  vTaskStartScheduler();
   /* USER CODE END 2 */
 
   /* Infinite loop */
