@@ -223,3 +223,21 @@ void App_State_Update(void)
 		}
 }
 
+void controlTask(void *pvParameters)
+{
+    TickType_t last_wake;
+
+    (void) pvParameters;
+
+    last_wake = xTaskGetTickCount();
+
+    for (; ;)
+    {
+        Encoder_UpdateSpeed();
+        App_State_Update();
+        APP_Speed_Control();
+
+        vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(10));
+    }
+}
+

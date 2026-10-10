@@ -54,7 +54,6 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-#define CONTROL_TICK_MS  10
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -76,9 +75,6 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-   uint32_t last_speed_time = 0;
-   uint32_t last_oled_time = 0;          /* OLED 上次刷新时刻 */
-   const uint32_t OLED_REFRESH_MS = 100;  /* OLED 每100ms刷新一次 */
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -116,7 +112,13 @@ int main(void)
 //  OLED_Init();
   Key_Init();
   printf("control test start\r\n");
-//  vTaskStartScheduler();
+  if(xTaskCreate(controlTask,"controlTask",128,NULL,2,NULL) != pdPASS)
+  {
+	printf("controlTask fail\r\n" );
+	Error_Handler();		  
+  }
+  
+  vTaskStartScheduler();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -127,24 +129,8 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-	
-	if(HAL_GetTick() - last_speed_time >= CONTROL_TICK_MS)
-		{
-			last_speed_time = HAL_GetTick();
-			
-			Encoder_UpdateSpeed();  /* 更新左右速度 */
-			App_State_Update();
-			APP_Speed_Control();
-		}
-		
-	/* OLED 数据面板按节拍刷新, 不阻塞控制循环 */
-//	if(HAL_GetTick() - last_oled_time >= OLED_REFRESH_MS)
-//		{
-//			last_oled_time = HAL_GetTick();
-//			App_OLED_Show();
-//		}
-   }
+
+  }
   /* USER CODE END 3 */
 }
   
