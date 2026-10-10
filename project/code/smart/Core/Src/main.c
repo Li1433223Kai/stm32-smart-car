@@ -132,9 +132,19 @@ int main(void)
 //	  printf("encoder  fail\r\n");
 //	  Error_Handler();
 //  }
-  if(xTaskCreate(gray,"gray",configMINIMAL_STACK_SIZE,NULL,2,NULL) != pdPASS)
+//  if(xTaskCreate(gray,"gray",configMINIMAL_STACK_SIZE,NULL,2,NULL) != pdPASS)
+//  {
+//	  printf("gray  fail\r\n");
+//	  Error_Handler();
+//  }
+  if(xTaskCreate(task1,"task1",configMINIMAL_STACK_SIZE,NULL,2,NULL) != pdPASS)
   {
-	  printf("gray  fail\r\n");
+	  printf("task1  fail\r\n");
+	  Error_Handler();
+  }
+  if(xTaskCreate(task2,"task2",configMINIMAL_STACK_SIZE,NULL,2,NULL) != pdPASS)
+  {
+	  printf("task2  fail\r\n");
 	  Error_Handler();
   }
   vTaskStartScheduler();
@@ -212,8 +222,12 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 int fputc(int ch, FILE *f)
 {
-    /* 50ms超时: 串口异常时放弃发送, 不阻塞主循环 */
-    HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, 50);
+    /* 直接写寄存器, 纯空转等 TXE, 不依赖 HAL_GetTick 超时 */
+    uint32_t guard = 0;
+    while (!(USART1->SR & USART_SR_TXE) && ++guard < 100000)
+    {
+    }
+    USART1->DR = (uint8_t)ch;
     return ch;
 }
 /* USER CODE END 4 */

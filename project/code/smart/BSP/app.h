@@ -19,7 +19,8 @@ void flipLED(void *pvParameters);
 void run(void *pvParameters);
 void encoder(void *pvParameters);
 void gray(void *pvParameters);
-
+void task1(void *pvParameters);
+void task2(void *pvParameters);
 
 void App_OLED_Show(void);
 

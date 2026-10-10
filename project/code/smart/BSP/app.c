@@ -299,3 +299,22 @@ void gray(void *pvParameters)
     }
 }
 
+void task1(void *pvParameters)
+{
+    (void)pvParameters;
+	vTaskDelay(pdMS_TO_TICKS(1000));
+    for (;;)
+    {
+		printf("1\r\n");
+    }
+}
+
+void task2(void *pvParameters)
+{
+    (void)pvParameters;
+	vTaskDelay(pdMS_TO_TICKS(1000));
+    for (;;)
+    {
+      printf("2\r\n");
+    }
+}
