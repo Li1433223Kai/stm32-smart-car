@@ -114,46 +114,49 @@ void APP_Speed_Control(void)
 	}
 
 /*
- * 刷新 OLED 数据面板(由 main 主循环按节拍调用, 如100ms一次)
+ * 刷新 OLED 数据面板
  *
  * 面板布局 (4行, 每行16字; 列从左到右0~15):
  *   行0: ST:xxxx   (状态: RUN/LOST/CROSS/STOP)
  *   行1: 目标速度   "T 150/150"  (左/右目标, 3位)
  *   行2: 实测速度   "L 120 R 118" (左右轮实测RPM)
  *   行3: 位置偏差   "Pos 1250"    (黑线位置, 连符号最多5位)
+ *
+ * 由 displayTask 每 200ms 调用一次。每行走 OLED_ShowLine 整行覆盖,
+ * 不再每帧全屏 Clear —— 整帧实测 133ms (含被控制任务抢占的时间)。
+ * 原来逐字符写、每帧先全屏 Clear 的写法按同样速率约 310ms,
+ * 直接放进 10ms 控制节拍会把周期拖慢十几倍。
  */
 void App_OLED_Show(void)
 {
-	/* 状态字符串: 依据当前位置环判定 */
-	const char *state_str;
-	switch (s_state) {
-    case APP_STATE_IDLE:  state_str = "IDLE";  break;
-    case APP_STATE_RUN:   state_str = "RUN";   break;
-    case APP_STATE_LOST:  state_str = "LOST";  break;
-    case APP_STATE_CROSS: state_str = "CROSS"; break;
-    default:              state_str = "IDLE";  break;
-}                                      
-	OLED_Clear();
+    char line[OLED_LINE_MAX];
+    const char *state_str;
 
-	/* 行0: 状态 */
-	OLED_ShowString(0, 0, "ST:");
-	OLED_ShowString(0, 3, state_str);
+    /* 状态字符串: 依据当前位置环判定 */
+    switch (s_state)
+        {
+        case APP_STATE_IDLE:  state_str = "IDLE";  break;
+        case APP_STATE_RUN:   state_str = "RUN";   break;
+        case APP_STATE_LOST:  state_str = "LOST";  break;
+        case APP_STATE_CROSS: state_str = "CROSS"; break;
+        default:              state_str = "IDLE";  break;
+        }
 
-	/* 行1: 目标速度 "T 150/150" */
-	OLED_ShowString(1, 0,  "T ");
-	OLED_ShowNum(1, 2,  target_left);
-	OLED_ShowString(1, 6,  "/");
-	OLED_ShowNum(1, 7,  target_right);
+    /* 行0: 状态 "ST:RUN" */
+    snprintf(line, sizeof(line), "ST:%s", state_str);
+    OLED_ShowLine(0, line);
 
-	/* 行2: 实测速度 "L 120 R 118" */
-	OLED_ShowString(2, 0,  "L ");
-	OLED_ShowNum(2, 2,  s_display_speed_L);
-	OLED_ShowString(2, 6,  "R ");
-	OLED_ShowNum(2, 8,  s_display_speed_R);
+    /* 行1: 目标速度 "T 150/150" */
+    snprintf(line, sizeof(line), "T %d/%d", target_left, target_right);
+    OLED_ShowLine(1, line);
 
-	/* 行3: 位置偏差 */
-	OLED_ShowString(3, 0, "Pos ");
-	OLED_ShowNum(3, 4, s_display_pos);
+    /* 行2: 实测速度 "L 120 R 118" */
+    snprintf(line, sizeof(line), "L %d R %d", s_display_speed_L, s_display_speed_R);
+    OLED_ShowLine(2, line);
+
+    /* 行3: 位置偏差 "Pos 1250" */
+    snprintf(line, sizeof(line), "Pos %d", s_display_pos);
+    OLED_ShowLine(3, line);
 }
 
 static void App_Stop(void) 
@@ -229,6 +232,39 @@ void App_State_Update(void)
     }
 }
 
+/*
+ * 显示任务: 每 200ms 刷一帧数据面板
+ *
+ * 优先级 1 排在控制任务(2)之后。控制任务每 10ms 里只忙约 1ms, 剩下 9ms
+ * 本来就在 IDLE 空转, 刷屏就填在这段时间里; 控制任务随时抢占它, 10ms 节拍
+ * 不受影响。SSD1306 不要求主机连续供时钟, 整帧被切碎只会变慢, 不会花屏。
+ *
+ * 实测: 单帧 133ms, 在 200ms 周期里占 67%; 同期控制任务仍是 100 拍 = 1000 tick,
+ * 一拍不差。周期不能往下调 —— 一帧就要 133ms, 改成 100ms 会让 vTaskDelayUntil
+ * 连着立即返回去追基准, 帧率反而掉下来。
+ *
+ * 屏只有这一个任务碰, 不需要互斥量。
+ */
+void displayTask(void *pvParameters)
+{
+    TickType_t last_wake;
+
+    (void) pvParameters;
+
+    OLED_Init();                             /* 内部已经清屏, 只跑一次 */
+
+    /* 节拍基准放在 OLED 之后取: 若在它之前取, 任务醒来时已经过去十几拍,
+     * vTaskDelayUntil 会连续立即返回去追基准, 白转十几圈才追平 */
+    last_wake = xTaskGetTickCount();
+
+    for (; ;)
+    {
+        App_OLED_Show();
+
+        vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(200));
+    }
+}
+
 void controlTask(void *pvParameters)
 {
     TickType_t last_wake;
@@ -246,4 +282,5 @@ void controlTask(void *pvParameters)
         vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(10));
     }
 }
+
 

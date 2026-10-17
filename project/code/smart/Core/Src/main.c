@@ -18,7 +18,6 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "i2c.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -103,14 +102,13 @@ int main(void)
   MX_TIM3_Init();
   MX_TIM2_Init();
   MX_TIM4_Init();
-  MX_I2C1_Init();
+  /* I2C1 外设已弃用: OLED 改走 PB3/PB4 软件 I2C, 见 BSP/bsp_oled.c */
   /* USER CODE BEGIN 2 */
   Motor_Init();
   Motor_StopAll();     /* 开始循迹前电机先停 */
   Gray_Init();
   App_Init();
   Encoder_Init();
-//  OLED_Init();
   Key_Init();
   Uart_Init();
 
@@ -127,6 +125,11 @@ int main(void)
 	Error_Handler();		  
   }
   
+  if(xTaskCreate(displayTask,"displayTask",192,NULL,1,NULL) != pdPASS)
+  {
+	printf("display fail\r\n" );
+	Error_Handler();		  
+  }
   vTaskStartScheduler();
   /* USER CODE END 2 */
 

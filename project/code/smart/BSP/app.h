@@ -18,4 +18,6 @@ void APP_Speed_Control(void);
 void App_OLED_Show(void);
 
 void controlTask(void *pvParameters);
+void displayTask(void *pvParameters);
+
 #endif
