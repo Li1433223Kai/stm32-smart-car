@@ -4,6 +4,7 @@
 #include "bsp_encoder.h"
 #include "bsp_key.h"
 #include "bsp_oled.h"
+#include "bsp_uart.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include <stdio.h>
@@ -25,6 +26,9 @@ static int32_t s_left_integral  = 0;
 static int32_t s_right_integral = 0;
 static int16_t target_left = 100 ;
 static int16_t target_right = 100;
+
+static char s_frame[UART_FRAME_MAX];
+
 
 //oled显示
 static int16_t s_display_pos      = 0;    /* 黑线位置 */
@@ -214,13 +218,15 @@ void App_State_Update(void)
 		s_display_speed_R = Encoder_GetSpeed_Right();
 
 		/* 每500ms打印一次, 避免刷屏/拖慢控制 */
-	if (HAL_GetTick() - s_print_time >= 500)
-		{
-		s_print_time = HAL_GetTick();
-		printf("ST:%d pos:%d L_t:%d R_t:%d L_s:%d R_s:%d\n",
-		s_state, s_display_pos, target_left, target_right,
-		(int)Encoder_GetSpeed_Left(), (int)Encoder_GetSpeed_Right());
-		}
+    if (HAL_GetTick() - s_print_time >= 500)
+    {
+        s_print_time = HAL_GetTick();
+        snprintf(s_frame, UART_FRAME_MAX,
+                 "ST:%d pos:%d L_t:%d R_t:%d L_s:%d R_s:%d\n",
+                 s_state, s_display_pos, target_left, target_right,
+                 (int)Encoder_GetSpeed_Left(), (int)Encoder_GetSpeed_Right());
+        Uart_Send(s_frame);          /* 只入队, 不等发送 */
+    }
 }
 
 void controlTask(void *pvParameters)

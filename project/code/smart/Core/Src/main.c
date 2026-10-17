@@ -34,6 +34,7 @@
 #include "bsp_key.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "bsp_uart.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -111,10 +112,18 @@ int main(void)
   Encoder_Init();
 //  OLED_Init();
   Key_Init();
-  printf("control test start\r\n");
-  if(xTaskCreate(controlTask,"controlTask",128,NULL,2,NULL) != pdPASS)
+  Uart_Init();
+
+  /* 控制任务栈 256 word(1KB): 调用链里有 snprintf, 128 word(512B) 余量偏紧 */
+  if(xTaskCreate(controlTask,"controlTask",256,NULL,2,NULL) != pdPASS)
   {
 	printf("controlTask fail\r\n" );
+	Error_Handler();		  
+  }
+  
+  if(xTaskCreate(uartTask,"uartTask",192,NULL,1,NULL) != pdPASS)
+  {
+	printf("uart fail\r\n" );
 	Error_Handler();		  
   }
   

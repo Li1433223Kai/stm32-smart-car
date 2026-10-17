@@ -137,7 +137,7 @@
             <DriverSelection>4101</DriverSelection>
           </Flash1>
           <bUseTDR>1</bUseTDR>
-          <Flash2>BIN\UL2V8M.DLL</Flash2>
+          <Flash2>BIN\UL2CM3.DLL</Flash2>
           <Flash3>"" ()</Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
@@ -570,6 +570,56 @@
               <FileName>freertos_hooks.c</FileName>
               <FileType>1</FileType>
               <FilePath>../BSP/freertos_hooks.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_uart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\BSP\bsp_uart.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>BSP_INC</GroupName>
+          <Files>
+            <File>
+              <FileName>app.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\BSP\app.h</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_encoder.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\BSP\bsp_encoder.h</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_gray.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\BSP\bsp_gray.h</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_key.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\BSP\bsp_key.h</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_motor.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\BSP\bsp_motor.h</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_oled.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\BSP\bsp_oled.h</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_uart.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\BSP\bsp_uart.h</FilePath>
+            </File>
+            <File>
+              <FileName>FreeRTOSConfig.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\BSP\FreeRTOSConfig.h</FilePath>
             </File>
           </Files>
         </Group>
